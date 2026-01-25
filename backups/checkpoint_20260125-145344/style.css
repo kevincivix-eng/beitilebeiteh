@@ -1,0 +1,219 @@
+:root {
+    --bg-color: #1a1a1a;
+    --text-color: #e0e0e0;
+    --accent-color: #00ffcc;
+    --map-bg: #242424;
+    --legend-bg: rgba(30, 30, 30, 0.8);
+    --popup-bg: rgba(30, 30, 30, 0.9);
+    --border-color: #555;
+}
+
+body.light-mode {
+    --bg-color: #f0f0f0;
+    --text-color: #333;
+    --accent-color: #007bff;
+    /* Blue for light mode */
+    --map-bg: #fff;
+    --legend-bg: rgba(255, 255, 255, 0.9);
+    --popup-bg: rgba(255, 255, 255, 0.95);
+    --border-color: #ccc;
+}
+
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-family: 'Heebo', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+
+#map {
+    height: 100vh;
+    width: 100%;
+    background-color: var(--map-bg);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: var(--legend-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+}
+
+/* Custom Popup Styles */
+.leaflet-popup-content-wrapper {
+    background: var(--popup-bg);
+    color: var(--text-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--accent-color);
+}
+
+.leaflet-popup-tip {
+    background: var(--popup-bg);
+    border: 1px solid var(--accent-color);
+    border-top: none;
+    border-left: none;
+}
+
+.leaflet-popup-content {
+    margin: 10px;
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: right;
+}
+
+.popup-title {
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-bottom: 5px;
+    font-size: 16px;
+}
+
+.popup-stat {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+}
+
+/* Custom Marker Labels */
+.location-label {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--text-color);
+    text-shadow: 0 0 4px #000, 0 0 8px #000;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Legend Control */
+.legend {
+    background: var(--legend-bg);
+    padding: 10px;
+    border-radius: 8px;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    direction: rtl;
+}
+
+.legend h4 {
+    margin: 0 0 5px;
+    color: var(--accent-color);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.legend-line {
+    display: inline-block;
+    background: #ff5555;
+    /* Match flow color */
+    margin-left: 8px;
+}
+
+/* Flow Animation */
+@keyframes dash-anim {
+    to {
+        stroke-dashoffset: -100;
+    }
+}
+
+.flow-anim {
+    animation: dash-anim 1.5s linear infinite;
+    pointer-events: none;
+    /* Let clicks pass through to the base line */
+}
+
+/* Active Filter Style */
+.active-filter {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+/* Light Mode Specific Overrides */
+body.light-mode .location-label {
+    color: #fff;
+    /* White text */
+    text-shadow:
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000;
+    /* Thin black outline */
+}
+
+/* View Mode Toggle Redesign */
+.view-mode-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.view-mode-label {
+    font-size: 13px;
+    margin-bottom: 6px;
+    color: var(--accent-color);
+    font-weight: bold;
+    text-align: center;
+}
+
+.view-mode-btn {
+    background: rgba(255, 255, 255, 0.1);
+    /* Semi-transparent */
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.view-mode-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.view-mode-icon {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+    color: var(--text-color);
+}
+
+body.light-mode .view-mode-btn {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+body.light-mode .view-mode-btn:hover {
+    background: rgba(0, 0, 0, 0.15);
+}
