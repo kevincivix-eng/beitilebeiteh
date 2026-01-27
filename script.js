@@ -62,7 +62,11 @@ let flows = [];
 
 
 // Airtable Configuration
-const AIRTABLE_API_KEY = ""; // TODO: Replace with secure secret management
+// const AIRTABLE_API_KEY is loaded from config.js for security
+if (typeof AIRTABLE_API_KEY === 'undefined') {
+    console.error("CRITICAL ERROR: AIRTABLE_API_KEY is not defined! config.js failed to load or is invalid.");
+    var AIRTABLE_API_KEY = ""; // Fallback to prevent crash
+}
 const AIRTABLE_BASE_ID = "appOPXerkRuO4YH1D";
 const AIRTABLE_TABLE_NAME = "EVENT";
 
