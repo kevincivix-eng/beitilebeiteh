@@ -2,5 +2,4 @@
   command = "node generate_config.js"
   publish = "."
 
-[build.environment]
-  AIRTABLE_API_KEY = "placeholder_value_to_be_overwritten_in_ui"
+
