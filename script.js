@@ -65,7 +65,8 @@ let flows = [];
 // const AIRTABLE_API_KEY is loaded from config.js for security
 if (typeof AIRTABLE_API_KEY === 'undefined') {
     console.error("CRITICAL ERROR: AIRTABLE_API_KEY is not defined! config.js failed to load or is invalid.");
-    var AIRTABLE_API_KEY = ""; // Fallback to prevent crash
+    // We cannot redeclare a missing const, so we just let it fail gracefully or set a global property if needed
+    window.AIRTABLE_API_KEY = "";
 }
 const AIRTABLE_BASE_ID = "appOPXerkRuO4YH1D";
 const AIRTABLE_TABLE_NAME = "EVENT";
