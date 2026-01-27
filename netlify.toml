@@ -1,5 +1,5 @@
 [build]
-  command = "echo \"const AIRTABLE_API_KEY = '$AIRTABLE_API_KEY';\" > config.js"
+  command = "printf 'const AIRTABLE_API_KEY = \"%s\";' \"$AIRTABLE_API_KEY\" > config.js"
   publish = "."
 
 [build.environment]
