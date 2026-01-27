@@ -1,0 +1,6 @@
+[build]
+  command = "echo \"const AIRTABLE_API_KEY = '$AIRTABLE_API_KEY';\" > config.js"
+  publish = "."
+
+[build.environment]
+  AIRTABLE_API_KEY = "placeholder_value_to_be_overwritten_in_ui"
