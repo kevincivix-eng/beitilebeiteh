@@ -1,5 +1,5 @@
 [build]
-  command = "printf 'const AIRTABLE_API_KEY = \"%s\";' \"$AIRTABLE_API_KEY\" > config.js"
+  command = "node generate_config.js"
   publish = "."
 
 [build.environment]
