@@ -16,6 +16,7 @@ if (!process.env.AIRTABLE_API_KEY) {
 
 const apiKey = process.env.AIRTABLE_API_KEY;
 console.log(`✅ AIRTABLE_API_KEY found (length: ${apiKey.length})`);
+console.log(`ℹ️  Key starts with: "${apiKey.substring(0, 4)}..."`);
 
 const content = `const AIRTABLE_API_KEY = "${apiKey}";`;
 
