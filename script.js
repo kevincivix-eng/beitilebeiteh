@@ -72,8 +72,33 @@ const AIRTABLE_BASE_ID = "appOPXerkRuO4YH1D";
 const AIRTABLE_TABLE_NAME = "EVENT";
 
 // Fetch Flows from Airtable
+// Fetch Flows from Airtable (with LocalStorage Caching)
 async function fetchFlows() {
-    console.log("Fetching flows from Airtable...");
+    const CACHE_KEY = 'airtable_flow_data';
+    const CACHE_TIME_KEY = 'airtable_flow_time';
+    const CACHE_DURATION = 3600000; // 1 hour in milliseconds
+
+    // Check Cache
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+    const now = Date.now();
+
+    if (cachedData && cachedTime && (now - cachedTime < CACHE_DURATION)) {
+        console.log("Loading flows from local cache...");
+        try {
+            const records = JSON.parse(cachedData);
+            console.log(`Loaded ${records.length} records from cache.`);
+            processAirtableData(records);
+
+            // Show a small toast/notice that data is cached (optional, but good for UX)
+            // For now, we just rely on the speed.
+            return;
+        } catch (e) {
+            console.error("Cache parsing error, refetching...", e);
+        }
+    }
+
+    console.log("Fetching flows from Airtable (No valid cache found)...");
     const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
 
     let allRecords = [];
@@ -114,18 +139,40 @@ async function fetchFlows() {
         }
 
         console.log(`Fetched ${allRecords.length} records.`);
+
+        // Save to Cache
+        try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(allRecords));
+            localStorage.setItem(CACHE_TIME_KEY, Date.now());
+            console.log("Data saved to cache.");
+        } catch (e) {
+            console.warn("Failed to save to cache (likely quota exceeded):", e);
+        }
+
         processAirtableData(allRecords);
 
     } catch (error) {
         console.error("Error fetching Airtable data:", error);
+
+        // Try fallback to cache even if expired
+        if (cachedData) {
+            console.log("Fetch failed, falling back to expired cache...");
+            try {
+                processAirtableData(JSON.parse(cachedData));
+                alert("שגיאה בטעינת נתונים חדשים. מציג נתונים שמורים (ייתכן שאינם מעודכנים).\nERROR: " + error.message);
+                return;
+            } catch (e) { }
+        }
+
         alert(`שגיאה בחיבור ל-Airtable:\n${error.message}\n\nטוען נתונים שנשמרו במטמון (Static Data)...`);
 
-        // Use fallback
+        // Use static fallback
         flows = fallbackFlows;
         drawFlows();
 
     } finally {
-        if (loader) loader.remove();
+        const currentLoader = document.getElementById('map-loader');
+        if (currentLoader) currentLoader.remove();
     }
 }
 
