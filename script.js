@@ -79,8 +79,14 @@ async function fetchFlows() {
     const CACHE_DURATION = 3600000; // 1 hour in milliseconds
 
     // Check Cache
-    const cachedData = localStorage.getItem(CACHE_KEY);
-    const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+    let cachedData = null;
+    let cachedTime = null;
+    try {
+        cachedData = localStorage.getItem(CACHE_KEY);
+        cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+    } catch (e) {
+        console.warn("LocalStorage access denied (likely iframe restrictions):", e);
+    }
     const now = Date.now();
 
     if (cachedData && cachedTime && (now - cachedTime < CACHE_DURATION)) {
@@ -142,11 +148,13 @@ async function fetchFlows() {
 
         // Save to Cache
         try {
+            // Check if localStorage is accessible first so we don't throw inside the try block for access
+            // actually just writing might throw
             localStorage.setItem(CACHE_KEY, JSON.stringify(allRecords));
             localStorage.setItem(CACHE_TIME_KEY, Date.now());
             console.log("Data saved to cache.");
         } catch (e) {
-            console.warn("Failed to save to cache (likely quota exceeded):", e);
+            console.warn("Failed to save to cache (likely quota exceeded or iframe restrictions):", e);
         }
 
         processAirtableData(allRecords);
