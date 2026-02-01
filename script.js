@@ -73,50 +73,76 @@ const AIRTABLE_TABLE_NAME = "EVENT";
 
 // Fetch Flows from Airtable
 // Fetch Flows from Airtable (with LocalStorage Caching)
+// Methods to handle data processing efficiently
+async function processAndRender(records) {
+    if (!records || records.length === 0) return;
+    processAirtableData(records);
+}
+
+// Fetch Flows: Strategy -> LocalStorage (Instant) -> data.json (Fast) -> Airtable (Live Update)
 async function fetchFlows() {
     const CACHE_KEY = 'airtable_flow_data';
     const CACHE_TIME_KEY = 'airtable_flow_time';
-    const CACHE_DURATION = 3600000; // 1 hour in milliseconds
+    const CACHE_DURATION = 3600000; // 1 hour
 
-    // Check Cache
+    // 1. Check LocalStorage (Most recent cache from this user)
     let cachedData = null;
     let cachedTime = null;
     try {
         cachedData = localStorage.getItem(CACHE_KEY);
         cachedTime = localStorage.getItem(CACHE_TIME_KEY);
-    } catch (e) {
-        console.warn("LocalStorage access denied (likely iframe restrictions):", e);
-    }
+    } catch (e) { console.warn("LocalStorage blocked:", e); }
+
     const now = Date.now();
+    let hasLoadedData = false;
 
     if (cachedData && cachedTime && (now - cachedTime < CACHE_DURATION)) {
-        console.log("Loading flows from local cache...");
+        console.log("🚀 Loading from LocalStorage (Instant)...");
         try {
             const records = JSON.parse(cachedData);
-            console.log(`Loaded ${records.length} records from cache.`);
-            processAirtableData(records);
-
-            // Show a small toast/notice that data is cached (optional, but good for UX)
-            // For now, we just rely on the speed.
+            processAndRender(records);
+            hasLoadedData = true;
+            // Optionally: We could still fetch fresh data in background here if we wanted strict consistency
+            // For now, we trust the cache for 1 hour.
             return;
+        } catch (e) { console.error("Cache corrupted:", e); }
+    }
+
+    // 2. Fetch Static Build Data (data.json) - Fast "Stale" Data
+    // We only do this if we didn't find valid localStorage data
+    if (!hasLoadedData) {
+        console.log("📂 Attempting to load static data.json...");
+        try {
+            const staticResponse = await fetch('data.json');
+            if (staticResponse.ok) {
+                const staticData = await staticResponse.json();
+                console.log(`✅ Loaded ${staticData.length} records from data.json`);
+                processAndRender(staticData);
+                hasLoadedData = true;
+            } else {
+                console.warn("⚠️ data.json not found (likely running locally or first build failed).");
+            }
         } catch (e) {
-            console.error("Cache parsing error, refetching...", e);
+            console.warn("Failed to load static data:", e);
         }
     }
 
-    console.log("Fetching flows from Airtable (No valid cache found)...");
-    const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
+    // 3. Fetch Fresh Data from Airtable (Background Revalidation)
+    console.log("☁️ Fetching fresh data from Airtable...");
 
+    // If we haven't shown ANYTHING yet, show the loader
+    if (!hasLoadedData) {
+        const mapDiv = document.getElementById('map');
+        const loader = document.createElement('div');
+        loader.id = 'map-loader';
+        loader.innerHTML = '<div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.7); color:white; padding:20px; border-radius:10px; z-index:9999;">טוען נתונים...</div>';
+        mapDiv.appendChild(loader);
+    }
+
+    const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
     let allRecords = [];
     let offset = null;
     let keepFetching = true;
-
-    // Show Loading
-    const mapDiv = document.getElementById('map');
-    const loader = document.createElement('div');
-    loader.id = 'map-loader';
-    loader.innerHTML = '<div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.7); color:white; padding:20px; border-radius:10px; z-index:9999;">טוען נתונים...</div>';
-    mapDiv.appendChild(loader);
 
     try {
         while (keepFetching) {
@@ -124,9 +150,7 @@ async function fetchFlows() {
             if (offset) fetchUrl += `&offset=${offset}`;
 
             const response = await fetch(fetchUrl, {
-                headers: {
-                    Authorization: `Bearer ${AIRTABLE_API_KEY}`
-                }
+                headers: { authorization: `Bearer ${AIRTABLE_API_KEY}` }
             });
 
             if (!response.ok) {
@@ -137,46 +161,41 @@ async function fetchFlows() {
             const data = await response.json();
             allRecords = [...allRecords, ...data.records];
 
-            if (data.offset) {
-                offset = data.offset;
-            } else {
-                keepFetching = false;
-            }
+            if (data.offset) offset = data.offset;
+            else keepFetching = false;
         }
 
-        console.log(`Fetched ${allRecords.length} records.`);
+        console.log(`☁️ Fresh data fetched: ${allRecords.length} records.`);
 
         // Save to Cache
         try {
-            // Check if localStorage is accessible first so we don't throw inside the try block for access
-            // actually just writing might throw
             localStorage.setItem(CACHE_KEY, JSON.stringify(allRecords));
             localStorage.setItem(CACHE_TIME_KEY, Date.now());
-            console.log("Data saved to cache.");
-        } catch (e) {
-            console.warn("Failed to save to cache (likely quota exceeded or iframe restrictions):", e);
-        }
+        } catch (e) { console.warn("LocalStorage write failed:", e); }
 
-        processAirtableData(allRecords);
+        // Update Map (This will replace the static/old data with fresh data)
+        processAndRender(allRecords);
 
     } catch (error) {
-        console.error("Error fetching Airtable data:", error);
+        console.error("Airtable fetch failed:", error);
 
-        // Try fallback to cache even if expired
-        if (cachedData) {
-            console.log("Fetch failed, falling back to expired cache...");
-            try {
-                processAirtableData(JSON.parse(cachedData));
-                alert("שגיאה בטעינת נתונים חדשים. מציג נתונים שמורים (ייתכן שאינם מעודכנים).\nERROR: " + error.message);
-                return;
-            } catch (e) { }
+        // If we already loaded data (from data.json), we don't need to show an error to the user
+        // We just log it. The user still sees the "Stale" map which is better than nothing.
+        if (!hasLoadedData) {
+            // Try fallback to EXPIRED cache as last resort
+            if (cachedData) {
+                try {
+                    processAndRender(JSON.parse(cachedData));
+                    alert("שגיאה בטעינת נתונים. מציג נתונים ישנים.");
+                    return;
+                } catch (e) { }
+            }
+
+            // If absolute chaos:
+            alert(`שגיאה בחיבור ל-Airtable:\n${error.message}\n\nטוען נתונים סטטיים (Static Fallback)...`);
+            flows = fallbackFlows;
+            drawFlows();
         }
-
-        alert(`שגיאה בחיבור ל-Airtable:\n${error.message}\n\nטוען נתונים שנשמרו במטמון (Static Data)...`);
-
-        // Use static fallback
-        flows = fallbackFlows;
-        drawFlows();
 
     } finally {
         const currentLoader = document.getElementById('map-loader');
