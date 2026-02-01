@@ -464,6 +464,9 @@ function updateLegendUI() {
 
 // Draw Flows Function
 function drawFlows() {
+    // Collect bounds to zoom map
+    const activeBounds = [];
+
     // Clear existing layers
     flows.forEach(flow => {
         if (flow.layers) {
@@ -486,6 +489,10 @@ function drawFlows() {
             const end = locations[visualTargetKey];
 
             if (!start || !end) return;
+
+            // Add to bounds
+            activeBounds.push([start.lat, start.lng]);
+            activeBounds.push([end.lat, end.lng]);
 
             // Color:
             // If Outbound: Color by Origin (Source).
@@ -566,6 +573,15 @@ function drawFlows() {
 
     // Re-apply filters
     updateMapVisibility();
+
+    // Auto-Zoom to Active Areas
+    if (activeBounds.length > 0) {
+        const bounds = L.latLngBounds(activeBounds);
+        // Only fit bounds if they are valid
+        if (bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+    }
 }
 
 // Initial Draw
