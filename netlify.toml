@@ -1,5 +1,5 @@
 [build]
-  command = "node generate_config.js"
+  command = "node generate_config.js && node fetch_data_build.js"
   publish = "."
 
 
