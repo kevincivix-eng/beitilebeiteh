@@ -528,23 +528,8 @@ function drawFlows() {
             // Follows the Visual Line (latlngs)
             // Outbound: Points to To.
             // Inbound: Points to From.
-            const decorator = L.polylineDecorator(polyline, {
-                patterns: [
-                    {
-                        offset: '55%',
-                        repeat: 0,
-                        symbol: L.Symbol.arrowHead({
-                            pixelSize: 10 + getWeight(flow.count),
-                            polygon: false,
-                            pathOptions: {
-                                stroke: true,
-                                color: color,
-                                weight: getWeight(flow.count)
-                            }
-                        })
-                    }
-                ]
-            }).addTo(map);
+            // Arrow Decorator removed per user request
+            // const decorator = L.polylineDecorator(polyline, { ... }).addTo(map);
             flow.layers.push(decorator);
 
         } catch (e) {
